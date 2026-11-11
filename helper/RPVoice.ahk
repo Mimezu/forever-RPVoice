@@ -144,13 +144,34 @@ BuildMessages(parsed) {
     else
         system .= " Rephrase it the way this character would say it, with a clear voice and accent, about the same length."
 
+    tone := Field(f, "tone", "natural")
+    native := Field(f, "native", "few")
+    length := Field(f, "length", "same")
+    phrases := Field(f, "phrases", "")
+    avoid := Field(f, "avoid", "")
+
+    if (tone != "natural")
+        system .= " Tone of voice: " tone "."
+    if (native = "none")
+        system .= " Do not use any words from the race's own language; flavour comes from English phrasing only."
+    else if (native = "many")
+        system .= " Use the race's own language more often (still understandable from context)."
+    if (length = "shorter")
+        system .= " Make it shorter than the original if you can."
+    else if (length = "longer")
+        system .= " It may be a bit longer and more expressive than the original."
+    if (phrases != "")
+        system .= " The character has favourite expressions: " phrases ". Use one now and then when it fits, not every time."
+    if (avoid != "")
+        system .= " Never use these words or expressions: " avoid "."
+
     if (chat = "EMOTE")
         system .= " This is an /emote: write a third-person action without the character's name (the game adds it), for example: grins and raises a tankard."
     else if (chat = "YELL")
         system .= " The line is shouted."
     else if (chat = "WHISPER" || chat = "BN_WHISPER")
         system .= " It is a private whisper."
-    else if (chat = "PARTY" || chat = "RAID" || chat = "GUILD" || chat = "OFFICER" || chat = "INSTANCE_CHAT")
+    else if (chat = "PARTY" || chat = "RAID" || chat = "RAID_WARNING" || chat = "GUILD" || chat = "OFFICER" || chat = "INSTANCE_CHAT")
         system .= " It is said to the character's group or guild; keep it practical and clear."
 
     who := (name != "" ? name ", " : "") . Trim(sex " " race) . (faction != "" && faction != "Neutral" ? " of the " faction : "")

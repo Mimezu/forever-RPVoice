@@ -18,6 +18,13 @@ check("short tag", RPV.BuildTag(info, true), "[[RPV race=Orc; faction=Horde; sex
 check("no persona", RPV.BuildTag({ race = "Dwarf", faction = "Alliance", sex = "female", chat = "PARTY" }),
 	"[[RPV race=Dwarf; faction=Alliance; sex=female; chat=PARTY]] ")
 
+check("voice fields", RPV.BuildTag({ race = "Dwarf", faction = "Alliance", sex = "male", chat = "SAY",
+	style = "strong", tone = "cheerful", native = "none", length = "shorter", phrases = "By my beard!, Stone", avoid = "lass" }),
+	"[[RPV race=Dwarf; faction=Alliance; sex=male; chat=SAY; style=strong; tone=cheerful; native=none; length=shorter; phrases=By my beard!, Stone; avoid=lass]] ")
+check("channel officer", RPV.ChannelKey("OFFICER"), "GUILD")
+check("channel instance", RPV.ChannelKey("INSTANCE_CHAT"), "RAID")
+check("channel say", RPV.ChannelKey("SAY"), "SAY")
+
 check("race token", RPV.RaceName("Scourge", "Undead"), "Forsaken")
 check("race night elf", RPV.RaceName("NightElf", "Elfe de la nuit"), "Night Elf")
 check("race unknown", RPV.RaceName("Vulpera", "Vulpéra"), "Vulpéra")

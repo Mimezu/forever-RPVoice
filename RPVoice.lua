@@ -26,11 +26,27 @@ local function Warn(msg)
 	end
 end
 
+local function OneOf(list, value)
+	for _, v in ipairs(list) do
+		if v == value then return value end
+	end
+	return list[1]
+end
+
 local function CharDB()
 	RPVoiceCharDB = RPVoiceCharDB or {}
 	local db = RPVoiceCharDB
 	if db.enabled == nil then db.enabled = true end
-	if not RPV.STYLES[db.style or ""] then db.style = "medium" end
+	db.style = RPV.STYLES[db.style or ""] and db.style or "medium"
+	db.tone = OneOf(RPV.TONES, db.tone)
+	db.native = OneOf(RPV.NATIVE, db.native)
+	db.length = OneOf(RPV.LENGTHS, db.length)
+	-- db.race: nil = the character's real race, otherwise a name from RPV.RACE_LIST
+	if db.race and OneOf(RPV.RACE_LIST, db.race) ~= db.race then db.race = nil end
+	db.channels = db.channels or {}
+	for _, ch in ipairs(RPV.CHANNELS) do
+		if db.channels[ch.key] == nil then db.channels[ch.key] = true end
+	end
 	return db
 end
 
@@ -40,13 +56,18 @@ local function SpeakerInfo(editBox)
 	local faction = UnitFactionGroup("player")
 	local chat = editBox and editBox:GetAttribute("chatType") or "SAY"
 	return {
-		race = RPV.RaceName(raceFile, raceLocalized),
+		race = db.race or RPV.RaceName(raceFile, raceLocalized),
 		faction = faction or "Neutral",
 		sex = RPV.SEX_NAMES[UnitSex("player")] or "unknown",
 		chat = chat,
 		name = (db.name and db.name ~= "") and db.name or UnitName("player"),
 		persona = db.persona,
 		style = db.style,
+		tone = db.tone,
+		native = db.native,
+		length = db.length,
+		phrases = db.phrases,
+		avoid = db.avoid,
 	}
 end
 
@@ -107,6 +128,11 @@ local function Tag(editBox)
 	end
 
 	local info = SpeakerInfo(editBox)
+	local channel = RPV.ChannelKey(info.chat)
+	if db.channels[channel] == false then
+		Warn("RP Voice is off for this chat (" .. channel:lower() .. "). Change it in /rpv.")
+		return
+	end
 	editBox.rpvLimits = LiftLimits(editBox)
 	editBox.rpvOriginal = original
 
@@ -167,7 +193,7 @@ local function ShowStatus()
 		db.enabled and "|cff80ff80on|r" or "|cffff8080off|r",
 		info.name, info.sex, info.race, info.faction, db.style))
 	Print("Persona: " .. ((db.persona and db.persona ~= "") and db.persona or "(none)"))
-	Print("Commands: /rpv on | off | name <name or clear> | persona <text or clear> | style light/medium/strong | test")
+	Print("/rpv opens the settings window. Also: /rpv on | off | name <name or clear> | persona <text or clear> | style light/medium/strong | test")
 end
 
 SLASH_RPVOICE1 = "/rpv"
@@ -195,10 +221,21 @@ SlashCmdList.RPVOICE = function(msg)
 		end
 	elseif cmd == "test" then
 		Print("tag the helper will see: " .. RPV.BuildTag(SpeakerInfo(nil)))
+	elseif cmd == "help" or cmd == "status" then
+		ShowStatus()
+	elseif RPVoiceOptions_Toggle then
+		RPVoiceOptions_Toggle()
 	else
 		ShowStatus()
 	end
 end
+
+-- Shared with Options.lua
+RPVoiceCore = {
+	CharDB = CharDB,
+	SpeakerInfo = SpeakerInfo,
+	Print = Print,
+}
 
 local loader = CreateFrame("Frame")
 loader:RegisterEvent("PLAYER_LOGIN")

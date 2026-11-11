@@ -32,6 +32,34 @@ RPV.SEX_NAMES = { [2] = "male", [3] = "female" }
 
 RPV.STYLES = { light = true, medium = true, strong = true }
 
+-- Choices offered in the settings window. First entry is the default.
+RPV.STYLE_LIST = { "light", "medium", "strong" }
+RPV.TONES = { "natural", "friendly", "gruff", "noble", "sly", "scholarly", "cheerful", "grim", "pious", "wild" }
+RPV.NATIVE = { "few", "none", "many" }       -- how many words in the race's own language
+RPV.LENGTHS = { "same", "shorter", "longer" }
+RPV.RACE_LIST = { "Human", "Dwarf", "Night Elf", "Gnome", "Orc", "Forsaken", "Tauren", "Troll" }
+
+-- Chat types the player can switch on or off, in display order.
+RPV.CHANNELS = {
+	{ key = "SAY", label = "Say" },
+	{ key = "YELL", label = "Yell" },
+	{ key = "EMOTE", label = "Emote" },
+	{ key = "PARTY", label = "Party" },
+	{ key = "RAID", label = "Raid" },
+	{ key = "GUILD", label = "Guild" },
+	{ key = "WHISPER", label = "Whisper" },
+	{ key = "CHANNEL", label = "Channels" },
+}
+
+-- Which channel switch a chat type falls under.
+function RPV.ChannelKey(chatType)
+	chatType = chatType or "SAY"
+	if chatType == "RAID_WARNING" or chatType == "INSTANCE_CHAT" then return "RAID" end
+	if chatType == "OFFICER" then return "GUILD" end
+	if chatType == "BN_WHISPER" then return "WHISPER" end
+	return chatType
+end
+
 function RPV.Clean(value, maxLen)
 	if value == nil then return "" end
 	value = tostring(value)
@@ -48,7 +76,7 @@ function RPV.RaceName(raceFile, raceLocalized)
 	return RPV.RACE_NAMES[raceFile or ""] or RPV.Clean(raceLocalized or raceFile or "Adventurer")
 end
 
--- info: { race, faction, sex, chat, name, persona, style }
+-- info: { race, faction, sex, chat, name, persona, style, tone, native, length, phrases, avoid }
 -- short = true leaves out name and persona (used when the box will not take a long line).
 function RPV.BuildTag(info, short)
 	local parts = {
@@ -64,8 +92,16 @@ function RPV.BuildTag(info, short)
 		if info.persona and info.persona ~= "" then
 			parts[#parts + 1] = "persona=" .. RPV.Clean(info.persona, 200)
 		end
-		if info.style and info.style ~= "" then
-			parts[#parts + 1] = "style=" .. RPV.Clean(info.style, 10)
+		local optional = {
+			{ "style", 10 }, { "tone", 20 }, { "native", 10 }, { "length", 10 },
+			{ "phrases", 150 }, { "avoid", 150 },
+		}
+		for _, field in ipairs(optional) do
+			local key, maxLen = field[1], field[2]
+			local value = RPV.Clean(info[key], maxLen)
+			if value ~= "" then
+				parts[#parts + 1] = key .. "=" .. value
+			end
 		end
 	end
 	return RPV.TAG_OPEN .. table.concat(parts, "; ") .. RPV.TAG_CLOSE

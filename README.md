@@ -24,7 +24,16 @@ The helper only reacts while WoW is the active window. It uses Ctrl+Shift+F12 an
 
 ## In-game settings (per character)
 
-- `/rpv`: status and commands
+`/rpv` opens the settings window (also under AddOns in the game's options):
+
+- **Character**: name, race (your own, or speak like another), persona
+- **Voice**: rewrite strength (light / medium / strong), tone (gruff, noble, sly, cheerful...), native words (none / few / many), length
+- **Personal touches**: favourite expressions (used now and then), words to never use
+- **Rewrite in**: switch the hotkey off for some chats (say, yell, emote, party, raid, guild, whisper, channels)
+
+Chat commands still work:
+
+- `/rpv help`: status and commands
 - `/rpv on` / `/rpv off`
 - `/rpv name <name>`: the name the AI is told (default: your character's name), `clear` to reset
 - `/rpv persona <text>`: e.g. `gruff old veteran who distrusts mages`
