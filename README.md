@@ -20,6 +20,8 @@ You always press Enter yourself. Nothing is sent for you.
 3. In WoW, open a chat box, type your line, press **Ctrl+Shift+R**.
 4. After a moment the rewritten line replaces yours. Edit it or press Enter.
 
+Rewrites stay close to what you typed: no added sentences, battle cries or poetry. Your own jokes stay jokes. To let the character fill something in, write `insert joke here`, or put what you want in curly braces: `the boss is dead, {a joke about his loot}`.
+
 The helper only reacts while WoW is the active window. It uses Ctrl+Shift+F12 and Ctrl+Shift+F11 to talk to the addon, so leave those keys unbound in WoW.
 
 ## In-game settings (per character)

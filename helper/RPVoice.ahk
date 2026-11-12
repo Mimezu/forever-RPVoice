@@ -121,6 +121,11 @@ WordCount(s) {
     return n
 }
 
+; The player asks the AI to fill something in: "insert joke here" or {a joke about gnomes}.
+HasRequest(line) {
+    return RegExMatch(line, "i)insert.{1,40}?here") || RegExMatch(line, "\{[^{}]+\}")
+}
+
 ; How many words the rewrite may use, from what the player typed.
 ; Voice should come from word choice, not from more words.
 WordBudget(fields, line) {
@@ -137,6 +142,8 @@ WordBudget(fields, line) {
         budget := Max(2, Min(budget, words))
     else if (length = "longer")
         budget := Round(budget * 1.3) + 1
+    if HasRequest(line)
+        budget += 15
     if (StrUpper(Field(fields, "chat", "SAY")) = "EMOTE")
         budget += 2
     return Max(3, budget)
@@ -160,7 +167,10 @@ BuildMessages(parsed, budget) {
         . "It must read like a real roleplayer typing quickly in game chat, not like a writer. "
         . "Reply with the line only: no quotes, no explanation, no speaker name. "
         . "`n`nRules:"
-        . "`n- Say only what the player said. Add no new ideas, details, jokes, offers or second sentences."
+        . "`n- Say only what the player said. Add no new ideas, details, jokes, offers or second sentences of your own."
+        . "`n- If the player made a joke, keep it a joke: you may sharpen it in the character's voice, but keep it quick."
+        . "`n- If the player left a request for you, like 'insert joke here' or something in {curly braces} such as {a joke about gnomes}, "
+        . "replace it with what they asked for, written by the character: short, in their voice, fitting the moment. Never leave the request words or braces in."
         . "`n- At most " budget " words. Never pad."
         . "`n- The voice comes from word choice and a little accent, not from extra words."
         . "`n- Do not open or close with a battle cry, a blessing, a god or an oath unless the player did."
