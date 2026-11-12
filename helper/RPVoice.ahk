@@ -116,7 +116,33 @@ Field(fields, key, default := "") {
     return (fields.Has(key) && fields[key] != "") ? fields[key] : default
 }
 
-BuildMessages(parsed) {
+WordCount(s) {
+    RegExReplace(Trim(s), "\S+", "", &n)
+    return n
+}
+
+; How many words the rewrite may use, from what the player typed.
+; Voice should come from word choice, not from more words.
+WordBudget(fields, line) {
+    words := Max(1, WordCount(line))
+    style := Field(fields, "style", "medium")
+    length := Field(fields, "length", "same")
+    if (style = "light")
+        budget := words + 2
+    else if (style = "strong")
+        budget := Round(words * 1.4) + 3
+    else
+        budget := Round(words * 1.2) + 2
+    if (length = "shorter")
+        budget := Max(2, Min(budget, words))
+    else if (length = "longer")
+        budget := Round(budget * 1.3) + 1
+    if (StrUpper(Field(fields, "chat", "SAY")) = "EMOTE")
+        budget += 2
+    return Max(3, budget)
+}
+
+BuildMessages(parsed, budget) {
     f := parsed.fields
     race := Field(f, "race", "adventurer")
     faction := Field(f, "faction", "")
@@ -125,54 +151,70 @@ BuildMessages(parsed) {
     persona := Field(f, "persona", "")
     style := Field(f, "style", "medium")
     chat := StrUpper(Field(f, "chat", "SAY"))
-
-    system := "You rewrite World of Warcraft chat lines into in-character roleplay speech. "
-        . "Reply with the rewritten line only: no quotes around it, no explanation, no speaker name in front. "
-        . "Keep the meaning, who is addressed, numbers, names and anything in [brackets] exactly. "
-        . "Keep any text from |c or |H up to |r unchanged. "
-        . "Do not guess the gender of the people addressed; the speaker's sex only describes the speaker. "
-        . "Answer in the language of the line. "
-        . "One line, at most 200 characters. Plain punctuation: no curly quotes, no long dashes (accented letters are fine). "
-        . "Give the speaker the speech habits, greetings and turns of phrase of their race and faction in the Warcraft setting. "
-        . "Native words (Orcish, Thalassian, Darnassian, Zandali and so on) only sparingly so other players still understand, "
-        . "and never phrases that belong to another race."
-
-    if (style = "light")
-        system .= " Light touch: keep the player's own wording and add only a little flavour, like a greeting or a word of accent."
-    else if (style = "strong")
-        system .= " Full roleplay: vivid in-character speech with a strong voice and lore flavour; it may be a little longer."
-    else
-        system .= " Rephrase it the way this character would say it, with a clear voice and accent, about the same length."
-
     tone := Field(f, "tone", "natural")
     native := Field(f, "native", "few")
-    length := Field(f, "length", "same")
     phrases := Field(f, "phrases", "")
     avoid := Field(f, "avoid", "")
 
-    if (tone != "natural")
-        system .= " Tone of voice: " tone "."
+    system := "You turn a World of Warcraft player's chat line into what their character would say. "
+        . "It must read like a real roleplayer typing quickly in game chat, not like a writer. "
+        . "Reply with the line only: no quotes, no explanation, no speaker name. "
+        . "`n`nRules:"
+        . "`n- Say only what the player said. Add no new ideas, details, jokes, offers or second sentences."
+        . "`n- At most " budget " words. Never pad."
+        . "`n- The voice comes from word choice and a little accent, not from extra words."
+        . "`n- Do not open or close with a battle cry, a blessing, a god or an oath unless the player did."
+        . "`n- No poetic images, no grand words, no 'indeed', no 'mayhap'. Plain, natural speech."
+        . "`n- Keep the player's energy: do not add '!' if they did not use one. Short lines stay short; 'ok' stays a word or two."
+        . "`n- Keep the meaning, who is addressed, numbers, names and anything in [brackets] exactly. Keep text from |c or |H to |r unchanged."
+        . "`n- Do not guess the gender of the people addressed; the speaker's sex only describes the speaker."
+        . "`n- Answer in the language of the line. Plain punctuation: no curly quotes, no long dashes."
+        . "`n- Only phrases that fit this race and faction in the Warcraft setting, never another race's."
+        . "`n- How races talk: orcs blunt, short clipped sentences, honour and strength; trolls drop little words, 'mon', 'da' for 'the'; "
+        . "dwarves 'aye', 'ye', 'o'', hearty; gnomes quick, clever, a bit technical; humans plain and courteous; "
+        . "night elves calm and formal; Forsaken dry, cold, a little dark; tauren slow, calm, earthy. "
+        . "Words like 'lads', 'mon' or 'aye' belong only to the races that use them."
+
     if (native = "none")
-        system .= " Do not use any words from the race's own language; flavour comes from English phrasing only."
+        system .= "`n- No words from the race's own language."
     else if (native = "many")
-        system .= " Use the race's own language more often (still understandable from context)."
-    if (length = "shorter")
-        system .= " Make it shorter than the original if you can."
-    else if (length = "longer")
-        system .= " It may be a bit longer and more expressive than the original."
+        system .= "`n- A word from the race's own language (Orcish, Thalassian, Darnassian, Zandali...) is welcome, still at most one."
+    else
+        system .= "`n- A word from the race's own language only rarely; usually none."
+
+    if (style = "light")
+        system .= "`n- Light: keep the player's own words. One small touch at most (an accent word or an address like 'friend'); sometimes none."
+    else if (style = "strong")
+        system .= "`n- Strong: rewrite the whole line in the character's own voice. Change the wording freely (accent, grammar, their kind of words), keep only the content. It must not read like the original with a word swapped. Still short, no extra content."
+    else
+        system .= "`n- Medium: reword it so it clearly sounds like this character (accent, word choice, the way they build a sentence). One or two touches, not more."
+
+    if (tone != "natural")
+        system .= "`n- Tone of voice: " tone "."
     if (phrases != "")
-        system .= " The character has favourite expressions: " phrases ". Use one now and then when it fits, not every time."
+        system .= "`n- Favourite expressions: " phrases ". Use one only rarely, when it fits naturally; most lines have none."
     if (avoid != "")
-        system .= " Never use these words or expressions: " avoid "."
+        system .= "`n- Never use: " avoid "."
 
     if (chat = "EMOTE")
-        system .= " This is an /emote: write a third-person action without the character's name (the game adds it), for example: grins and raises a tankard."
+        system .= "`n- This is an /emote: a short third-person action without the character's name (the game adds it)."
     else if (chat = "YELL")
-        system .= " The line is shouted."
+        system .= "`n- The line is shouted."
     else if (chat = "WHISPER" || chat = "BN_WHISPER")
-        system .= " It is a private whisper."
+        system .= "`n- A private whisper."
     else if (chat = "PARTY" || chat = "RAID" || chat = "RAID_WARNING" || chat = "GUILD" || chat = "OFFICER" || chat = "INSTANCE_CHAT")
-        system .= " It is said to the character's group or guild; keep it practical and clear."
+        system .= "`n- Said to their group or guild: practical and clear first."
+
+    system .= "`n`nExamples of the right size and feel (other speakers, other lines):"
+        . "`nLight, Dwarf, 'need a heal' -> Need a heal here, friend."
+        . "`nMedium, Dwarf, 'need a heal' -> Could use a heal o'er here."
+        . "`nStrong, Dwarf, 'need a heal' -> Get some healin' o'er here, I'm bleedin'."
+        . "`nMedium, Orc, 'anyone want to group for the mine?' -> Who fights with me in the mine?"
+        . "`nStrong, Troll, 'brb 5 min, need food' -> Back in five, mon. Gotta eat."
+        . "`nStrong, Orc, 'thanks for the help' -> You fought well. I owe you."
+        . "`nStrong, Forsaken, 'anyone want to group?' -> Who would walk with me, then?"
+        . "`nMedium, Night elf, 'where is the auction house?' -> Where might I find the auction house?"
+        . "`nMedium, Human, 'ok' -> Very well."
 
     who := (name != "" ? name ", " : "") . Trim(sex " " race) . (faction != "" && faction != "Neutral" ? " of the " faction : "")
     user := "Speaker: " who "."
@@ -183,16 +225,11 @@ BuildMessages(parsed) {
     return [Map("role", "system", "content", system), Map("role", "user", "content", user)]
 }
 
-RewriteTagged(tagged) {
-    parsed := ParseTagged(tagged)
-    if (parsed.line = "")
-        throw Error("the line is empty")
-    msgs := BuildMessages(parsed)
+Ask(msgs) {
     body := '{"model":' JsonString(MODEL) ',"stream":false,"messages":['
     for i, m in msgs
         body .= (i > 1 ? "," : "") '{"role":' JsonString(m["role"]) ',"content":' JsonString(m["content"]) '}'
     body .= "]}"
-
     reply := PostJson(API_URL, body)
     if !RegExMatch(reply, 's)"content"\s*:\s*"((?:[^"\\]|\\.)*)"', &m) {
         if RegExMatch(reply, 's)"message"\s*:\s*"((?:[^"\\]|\\.)*)"', &err)
@@ -201,6 +238,27 @@ RewriteTagged(tagged) {
     }
     return CleanForWow(JsonUnescape(m[1]))
 }
+
+RewriteTagged(tagged) {
+    parsed := ParseTagged(tagged)
+    if (parsed.line = "")
+        throw Error("the line is empty")
+    budget := WordBudget(parsed.fields, parsed.line)
+    msgs := BuildMessages(parsed, budget)
+    result := Ask(msgs)
+    ; too long: ask once more, firmly, and keep the shorter answer
+    if (WordCount(result) > budget + 1) {
+        msgs.Push(Map("role", "assistant", "content", result))
+        msgs.Push(Map("role", "user", "content", "Too long and too much. Same meaning, plain, at most " budget " words."))
+        try {
+            second := Ask(msgs)
+            if (WordCount(second) < WordCount(result))
+                result := second
+        }
+    }
+    return result
+}
+
 
 ; ---- HTTP + JSON ----------------------------------------------------------------
 
