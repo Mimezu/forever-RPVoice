@@ -41,6 +41,7 @@ local function CharDB()
 	db.tone = OneOf(RPV.TONES, db.tone)
 	db.native = OneOf(RPV.NATIVE, db.native)
 	db.length = OneOf(RPV.LENGTHS, db.length)
+	db.lang = OneOf(RPV.LANGS, db.lang)
 	-- db.race: nil = the character's real race, otherwise a name from RPV.RACE_LIST
 	if db.race and OneOf(RPV.RACE_LIST, db.race) ~= db.race then db.race = nil end
 	db.channels = db.channels or {}
@@ -66,6 +67,7 @@ local function SpeakerInfo(editBox)
 		tone = db.tone,
 		native = db.native,
 		length = db.length,
+		lang = db.lang,
 		phrases = db.phrases,
 		avoid = db.avoid,
 	}

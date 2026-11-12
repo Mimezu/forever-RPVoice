@@ -19,6 +19,7 @@ You always press Enter yourself.
 - Each line gets a word budget based on what you typed and the style. If an answer runs long, the helper asks once more and keeps the shorter one.
 - No added sentences, battle cries or poetry.
 - Your jokes stay jokes. `insert joke here` or `{a joke about X}` lets the character write that part.
+- Language English: the line is translated into English, then rewritten.
 - `/emote` lines become actions and `/yell` lines become shouts. Party and guild lines stay practical.
 
 ## Helper settings

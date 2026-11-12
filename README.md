@@ -17,6 +17,7 @@ Rewrites the chat line you are typing in your character's roleplay voice, using 
 
 - Nothing is ever sent for you.
 - `{a joke about gnomes}` or `insert joke here` lets the character write that part.
+- Language: English translates any line first (/rpv, Voice).
 - Leave Ctrl+Shift+F11 and Ctrl+Shift+F12 unbound in WoW.
 
 | Command | |

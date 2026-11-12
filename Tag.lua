@@ -37,6 +37,7 @@ RPV.STYLE_LIST = { "light", "medium", "strong" }
 RPV.TONES = { "natural", "friendly", "gruff", "noble", "sly", "scholarly", "cheerful", "grim", "pious", "wild" }
 RPV.NATIVE = { "few", "none", "many" }       -- how many words in the race's own language
 RPV.LENGTHS = { "same", "shorter", "longer" }
+RPV.LANGS = { "same", "english" }            -- same: answer in the typed language; english: translate first
 RPV.RACE_LIST = { "Human", "Dwarf", "Night Elf", "Gnome", "Orc", "Forsaken", "Tauren", "Troll" }
 
 -- Chat types the player can switch on or off, in display order.
@@ -100,7 +101,7 @@ function RPV.BuildTag(info, short)
 			parts[#parts + 1] = "persona=" .. RPV.Clean(info.persona, 200)
 		end
 		local optional = {
-			{ "style", 10 }, { "tone", 20 }, { "native", 10 }, { "length", 10 },
+			{ "style", 10 }, { "tone", 20 }, { "native", 10 }, { "length", 10 }, { "lang", 10 },
 			{ "phrases", 150 }, { "avoid", 150 },
 		}
 		for _, field in ipairs(optional) do

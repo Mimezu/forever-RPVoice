@@ -6,7 +6,7 @@ local RPV = RPVoiceTag
 local S = RPVoiceSkin
 local Core = RPVoiceCore
 
-local W, H = 660, 536
+local W, H = 660, 568
 local GOLD = { 1, 0.82, 0 }
 local NOTE = { 0.80, 0.77, 0.70 }
 local DIM = { 0.62, 0.60, 0.55 }
@@ -295,6 +295,7 @@ local function Describe()
 	local who = string.format("|cffffd100%s|r  %s %s, %s", info.name, info.sex, info.race, info.faction)
 	local voice = Capitalize(db.style)
 	if db.tone ~= "natural" then voice = voice .. " · " .. Capitalize(db.tone) end
+	if db.lang == "english" then voice = voice .. " · English" end
 	return who, voice
 end
 
@@ -374,11 +375,12 @@ local function Build()
 	persona:SetPoint("TOPLEFT", LABEL_W + 6, -2); persona:SetPoint("RIGHT"); persona:SetHeight(80)
 
 	-- Voice -----------------------------------------------------------------
-	local voice = Card(content, "Voice", 0, top - 196, COL, 166)
+	local voice = Card(content, "Voice", 0, top - 196, COL, 198)
 	Segmented(Row(voice, "Rewrite"), RPV.STYLE_LIST, function() return DB().style end, function(v) DB().style = v end)
 	Stepper(Row(voice, "Tone"), RPV.TONES, Capitalize, function() return DB().tone end, function(v) DB().tone = v end)
 	Segmented(Row(voice, "Native words"), { "none", "few", "many" }, function() return DB().native end, function(v) DB().native = v end)
 	Segmented(Row(voice, "Length"), { "shorter", "same", "longer" }, function() return DB().length end, function(v) DB().length = v end)
+	Segmented(Row(voice, "Language"), RPV.LANGS, function() return DB().lang end, function(v) DB().lang = v end)
 
 	-- Personal touches ------------------------------------------------------
 	local x2 = COL + 10
@@ -404,7 +406,7 @@ local function Build()
 	Stacked(touches, "Never say", "", "avoid", "mon, lass")
 
 	-- Channels --------------------------------------------------------------
-	local chans = Card(content, "Rewrite in", x2, top - 196, COL, 166)
+	local chans = Card(content, "Rewrite in", x2, top - 196, COL, 198)
 	local note = chans:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
 	note:SetPoint("TOPRIGHT", -PAD, -12)
 	note:SetTextColor(DIM[1], DIM[2], DIM[3])

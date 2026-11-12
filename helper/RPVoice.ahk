@@ -162,6 +162,7 @@ BuildMessages(parsed, budget) {
     native := Field(f, "native", "few")
     phrases := Field(f, "phrases", "")
     avoid := Field(f, "avoid", "")
+    english := (Field(f, "lang", "same") = "english")
 
     system := "You turn a World of Warcraft player's chat line into what their character would say. "
         . "It must read like a real roleplayer typing quickly in game chat, not like a writer. "
@@ -178,7 +179,9 @@ BuildMessages(parsed, budget) {
         . "`n- Keep the player's energy: do not add '!' if they did not use one. Short lines stay short; 'ok' stays a word or two."
         . "`n- Keep the meaning, who is addressed, numbers, names and anything in [brackets] exactly. Keep text from |c or |H to |r unchanged."
         . "`n- Do not guess the gender of the people addressed; the speaker's sex only describes the speaker."
-        . "`n- Answer in the language of the line. Plain punctuation: no curly quotes, no long dashes."
+        . (english
+            ? "`n- Always answer in English. If the line is in another language (French, German...), translate its meaning first, then give it the character's voice. Keep names and [brackets] as typed. Plain ASCII punctuation: no curly quotes, no long dashes."
+            : "`n- Answer in the language of the line. Plain punctuation: no curly quotes, no long dashes (accented letters are fine).")
         . "`n- Only phrases that fit this race and faction in the Warcraft setting, never another race's."
         . "`n- How races talk: orcs blunt, short clipped sentences, honour and strength; trolls drop little words, 'mon', 'da' for 'the'; "
         . "dwarves 'aye', 'ye', 'o'', hearty; gnomes quick, clever, a bit technical; humans plain and courteous; "
