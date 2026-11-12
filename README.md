@@ -1,61 +1,42 @@
 # RP Voice
 
-Rewrites the line you are typing in WoW Forever chat into your character's roleplay voice, from your race, faction and sex, using ChatGPT through BridgeControl.
+Rewrites the chat line you are typing in your character's roleplay voice, using ChatGPT through BridgeControl.
 
-Example (male Orc of the Horde): `hey, want to group for the mine?` becomes `Lok'tar! You want to group for the mine, eh?`
+## Install
 
-## How it works
-
-WoW addons cannot reach the network, so there are two parts:
-
-- **The addon** (`RPVoice`) knows who you are playing. When the helper asks, it puts a short tag in front of your chat line, for example `[[RPV race=Orc; faction=Horde; sex=male; chat=SAY]]`, and puts your line back right after it has been copied.
-- **The helper** (`helper\RPVoice.ahk`, AutoHotkey v2) runs on Windows. It sends the tagged line to BridgeControl (`http://127.0.0.1:18080`) and pastes the answer back into the chat box.
-
-You always press Enter yourself. Nothing is sent for you.
+1. Put the `RPVoice` folder in `_forever_\Interface\AddOns\`.
+2. Install AutoHotkey v2.
+3. Run BridgeControl.
 
 ## Use
 
-1. Make sure BridgeControl is running.
-2. Start `helper\RPVoice.ahk` (double-click). A tray icon appears.
-3. In WoW, open a chat box, type your line, press **Ctrl+Shift+R**.
-4. After a moment the rewritten line replaces yours. Edit it or press Enter.
+1. Double-click `helper\RPVoice.ahk`.
+2. In WoW, type a line in chat.
+3. Press Ctrl+Shift+R.
+4. Check the new line, then press Enter.
 
-Rewrites stay close to what you typed: no added sentences, battle cries or poetry. Your own jokes stay jokes. To let the character fill something in, write `insert joke here`, or put what you want in curly braces: `the boss is dead, {a joke about his loot}`.
+- Nothing is ever sent for you.
+- `{a joke about gnomes}` or `insert joke here` lets the character write that part.
+- Leave Ctrl+Shift+F11 and Ctrl+Shift+F12 unbound in WoW.
 
-The helper only reacts while WoW is the active window. It uses Ctrl+Shift+F12 and Ctrl+Shift+F11 to talk to the addon, so leave those keys unbound in WoW.
+| Command | |
+|---|---|
+| `/rpv` | Settings |
+| `/rpv on`, `/rpv off` | On or off |
+| `/rpv test` | Show the tag |
+| `/rpv help` | Status |
 
-## In-game settings (per character)
+## Data
 
-`/rpv` opens the settings window (also under AddOns in the game's options):
+Settings are saved per character, in `WTF\Account\<account>\<realm>\<character>\SavedVariables\RPVoice.lua`.
 
-- **Character**: name, race (your own, or speak like another), persona
-- **Voice**: rewrite strength (light / medium / strong), tone (gruff, noble, sly, cheerful...), native words (none / few / many), length
-- **Personal touches**: favourite expressions (used now and then), words to never use
-- **Rewrite in**: switch the hotkey off for some chats (say, yell, emote, party, raid, guild, whisper, channels)
-
-Chat commands still work:
-
-- `/rpv help`: status and commands
-- `/rpv on` / `/rpv off`
-- `/rpv name <name>`: the name the AI is told (default: your character's name), `clear` to reset
-- `/rpv persona <text>`: e.g. `gruff old veteran who distrusts mages`
-- `/rpv style light | medium | strong`: how far the rewrite goes
-- `/rpv test`: shows the tag the helper will see
-
-`/emote` lines are rewritten as actions, `/yell` as shouts, party and guild lines are kept practical.
-
-## Helper settings
-
-At the top of `helper\RPVoice.ahk`: the hotkey, the model (`gpt-5.6-luna` by default), the BridgeControl address and the timeout.
-
-Test without the game:
-
-```
-AutoHotkey64.exe helper\RPVoice.ahk --test "[[RPV race=Dwarf; faction=Alliance; sex=female; chat=SAY]] good morning"
-```
-
-## Tests
+## Test
 
 ```
 lua5.1 tests\test_tag.lua
+AutoHotkey64.exe helper\RPVoice.ahk --test "[[RPV race=Dwarf; faction=Alliance; sex=male; chat=SAY]] good morning"
 ```
+
+## More
+
+[How it works](docs/how-it-works.md)
