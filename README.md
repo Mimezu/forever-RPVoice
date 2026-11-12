@@ -1,6 +1,6 @@
 # RP Voice
 
-Rewrites the chat line you are typing in your character's roleplay voice, using ChatGPT through BridgeControl.
+Rewrites your chat line, typed or spoken, in your character's roleplay voice, using BridgeControl.
 
 ## Install
 
@@ -10,15 +10,15 @@ Rewrites the chat line you are typing in your character's roleplay voice, using 
 
 ## Use
 
-1. Double-click `helper\RPVoice.ahk`.
-2. In WoW, type a line in chat.
-3. Press Ctrl+Shift+R.
+1. Double-click `helper\RPVoice.ahk` (or let it start with Windows).
+2. In WoW Forever, type a line in chat and press Shift+Enter.
+3. Or hold Ctrl+Enter, talk, release.
 4. Check the new line, then press Enter.
 
 - Nothing is ever sent for you.
 - `{a joke about gnomes}` or `insert joke here` lets the character write that part.
 - Language: English translates any line first (/rpv, Voice).
-- Leave Ctrl+Shift+F11 and Ctrl+Shift+F12 unbound in WoW.
+- Leave Ctrl+Shift+F10, F11 and F12 unbound in WoW.
 
 | Command | |
 |---|---|

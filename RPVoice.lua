@@ -7,11 +7,14 @@
 --   3. helper presses Ctrl+Shift+F11  -> this addon puts your line back as it was, selected
 --   4. helper asks BridgeControl, then re-presses Ctrl+Shift+F11 and pastes the answer
 -- You still press Enter yourself.
+-- For speech, the helper first presses Ctrl+Shift+F10: the chat box opens (or its
+-- text is selected) and the transcript is pasted in before step 1.
 
 local RPV = RPVoiceTag
 
 local TAG_KEY = "F12"
 local UNTAG_KEY = "F11"
+local OPEN_KEY = "F10"
 local TAG_TIMEOUT = 2 -- seconds; a tag still there after this is removed
 
 local function Print(msg)
@@ -164,8 +167,32 @@ local function OnKeyDown(editBox, key)
 		Tag(editBox)
 	elseif key == UNTAG_KEY then
 		Untag(editBox)
+	elseif key == OPEN_KEY then
+		editBox:HighlightText()
 	end
 end
+
+-- Speech (helper's hold Ctrl+Enter): Ctrl+Shift+F10 opens the chat box, or selects
+-- its text when it is already open, so the transcript can be pasted in.
+local function ActiveEditBox()
+	if ChatFrameUtil and ChatFrameUtil.GetActiveWindow then return ChatFrameUtil.GetActiveWindow() end
+	if ChatEdit_GetActiveWindow then return ChatEdit_GetActiveWindow() end
+end
+
+local function OpenChat()
+	local editBox = ActiveEditBox()
+	if editBox and editBox:IsShown() then
+		editBox:SetFocus()
+		editBox:HighlightText()
+	elseif ChatFrameUtil and ChatFrameUtil.OpenChat then
+		ChatFrameUtil.OpenChat("")
+	elseif ChatFrame_OpenChat then
+		ChatFrame_OpenChat("")
+	end
+end
+
+local openButton = CreateFrame("Button", "RPVoiceOpenChatButton", UIParent)
+openButton:SetScript("OnClick", OpenChat)
 
 local hooked = {}
 
@@ -244,6 +271,7 @@ loader:RegisterEvent("PLAYER_LOGIN")
 loader:SetScript("OnEvent", function()
 	CharDB()
 	HookAll()
+	SetOverrideBindingClick(loader, true, "CTRL-SHIFT-" .. OPEN_KEY, "RPVoiceOpenChatButton")
 	if FCF_OpenTemporaryWindow then
 		hooksecurefunc("FCF_OpenTemporaryWindow", HookAll)
 	end

@@ -3,9 +3,9 @@
 WoW addons cannot reach the network, so RP Voice has two parts.
 
 - **The addon** knows who you are playing. When the helper asks, it puts a short tag in front of your chat line, for example `[[RPV race=Orc; faction=Horde; sex=male; chat=SAY]]`. It puts your line back as soon as the tag has been copied.
-- **The helper** (`helper\RPVoice.ahk`, AutoHotkey v2) runs on Windows. It sends the tagged line to BridgeControl (`http://127.0.0.1:18080`) and pastes the answer back into the chat box.
+- **The helper** (`helper\RPVoice.ahk`, AutoHotkey v2) runs on Windows. It sends the tagged line to BridgeControl (`http://127.0.0.1:18080`) and pastes the answer back into the chat box. Its hotkeys only work while WoW Forever (`_forever_\Wow.exe`) is the active window.
 
-## The hotkey, step by step
+## Shift+Enter, step by step
 
 1. The helper presses Ctrl+Shift+F12. The addon adds the tag and selects the line.
 2. The helper presses Ctrl+C.
@@ -13,6 +13,13 @@ WoW addons cannot reach the network, so RP Voice has two parts.
 4. The helper asks BridgeControl, then presses Ctrl+Shift+F11 again and pastes the answer.
 
 You always press Enter yourself.
+
+## Hold Ctrl+Enter to talk
+
+1. The helper records the microphone while you hold the keys.
+2. On release, BridgeControl transcribes it (`/v1/audio/transcriptions`, about half a second).
+3. The helper presses Ctrl+Shift+F10: the addon opens the chat box, or selects its text.
+4. The transcript is pasted in, then rewritten as with Shift+Enter.
 
 ## Rewrite rules
 
@@ -24,4 +31,4 @@ You always press Enter yourself.
 
 ## Helper settings
 
-The top of `helper\RPVoice.ahk` sets the hotkey, the model (`gpt-5.6-luna`), the BridgeControl address and the timeout.
+The top of `helper\RPVoice.ahk` sets the hotkeys, the model (`gpt-6-luna`), fast mode, reasoning effort (`medium`), the BridgeControl addresses and the timeout.
