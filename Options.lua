@@ -292,9 +292,9 @@ local function DB() return Core.CharDB() end
 local function Describe()
 	local info = Core.SpeakerInfo(nil)
 	local db = DB()
-	local who = string.format("|cffffd100%s|r, %s %s of the %s", info.name, info.sex, info.race, info.faction)
+	local who = string.format("|cffffd100%s|r  %s %s, %s", info.name, info.sex, info.race, info.faction)
 	local voice = Capitalize(db.style)
-	if db.tone ~= "natural" then voice = voice .. ", " .. db.tone end
+	if db.tone ~= "natural" then voice = voice .. " · " .. Capitalize(db.tone) end
 	return who, voice
 end
 
@@ -331,12 +331,11 @@ local function Build()
 	voiceLine:SetTextColor(NOTE[1], NOTE[2], NOTE[3])
 	OnRefresh(function()
 		local w, v = Describe()
-		who:SetText("Speaking as " .. w)
-		voiceLine:SetText("Voice: " .. v .. "   |cff9a9488Rewrite: type in chat, then Ctrl+Shift+R|r")
+		who:SetText(w)
+		voiceLine:SetText(v .. "   |cff9a9488Hotkey Ctrl+Shift+R|r")
 	end)
 	local enabled = Check(content, "Enabled", function() return DB().enabled end, function(v) DB().enabled = v end)
 	enabled:SetPoint("TOPRIGHT", -enabled.label:GetStringWidth() - 6, -2)
-	Tooltip(enabled, "Enabled", "When off, the helper's hotkey leaves your chat line alone.")
 	local rule = Line(content, 0.45)
 	rule:SetPoint("TOPLEFT", 0, -40); rule:SetPoint("TOPRIGHT", 0, -40); rule:SetHeight(1)
 
@@ -347,12 +346,11 @@ local function Build()
 	local nameRow = Row(char, "Name")
 	local nameBox = Input(nameRow, {
 		max = 40,
-		hint = function() return UnitName("player") .. " (your character)" end,
+		hint = function() return UnitName("player") end,
 		get = function() return DB().name end,
 		set = function(v) DB().name = v end,
 	})
 	nameBox:SetPoint("TOPLEFT", LABEL_W + 6, -2); nameBox:SetPoint("RIGHT"); nameBox:SetHeight(22)
-	Tooltip(nameBox, "Name", "The name the storyteller is told. Leave empty to use your character's name.")
 
 	local raceValues = { "auto" }
 	for _, r in ipairs(RPV.RACE_LIST) do raceValues[#raceValues + 1] = r end
@@ -360,17 +358,16 @@ local function Build()
 	Stepper(raceRow, raceValues, function(v)
 		if v == "auto" then
 			local loc, file = UnitRace("player")
-			return "Own race (" .. RPV.RaceName(file, loc) .. ")"
+			return RPV.RaceName(file, loc) .. " (own)"
 		end
 		return v
 	end, function() return DB().race or "auto" end, function(v) DB().race = (v ~= "auto") and v or nil end)
-	Tooltip(raceRow, "Race", "Normally your character's own race. Pick another to speak like one (a raised-by-dwarves human, say).")
 
 	local personaRow = Row(char, "Persona", 82)
 	personaRow.label:SetPoint("TOPLEFT", 0, -6)
 	local persona = Input(personaRow, {
 		multi = true, max = 200, counter = true,
-		hint = function() return "Who is this character? e.g. gruff old veteran who distrusts mages" end,
+		hint = function() return "Gruff old veteran" end,
 		get = function() return DB().persona end,
 		set = function(v) DB().persona = v end,
 	})
@@ -378,17 +375,9 @@ local function Build()
 
 	-- Voice -----------------------------------------------------------------
 	local voice = Card(content, "Voice", 0, top - 196, COL, 166)
-	Segmented(Row(voice, "Rewrite"), RPV.STYLE_LIST, function() return DB().style end, function(v) DB().style = v end, {
-		light = "Your own words, with a touch of accent.",
-		medium = "Rephrased the way your character talks.",
-		strong = "Full roleplay flourish.",
-	})
+	Segmented(Row(voice, "Rewrite"), RPV.STYLE_LIST, function() return DB().style end, function(v) DB().style = v end)
 	Stepper(Row(voice, "Tone"), RPV.TONES, Capitalize, function() return DB().tone end, function(v) DB().tone = v end)
-	Segmented(Row(voice, "Native words"), { "none", "few", "many" }, function() return DB().native end, function(v) DB().native = v end, {
-		none = "No Orcish, Thalassian, Darnassian... only English phrasing.",
-		few = "A word here and there that others still understand.",
-		many = "More of the race's own language.",
-	})
+	Segmented(Row(voice, "Native words"), { "none", "few", "many" }, function() return DB().native end, function(v) DB().native = v end)
 	Segmented(Row(voice, "Length"), { "shorter", "same", "longer" }, function() return DB().length end, function(v) DB().length = v end)
 
 	-- Personal touches ------------------------------------------------------
@@ -411,15 +400,15 @@ local function Build()
 		n:SetTextColor(NOTE[1], NOTE[2], NOTE[3])
 		n:SetText(note)
 	end
-	Stacked(touches, "Favourite expressions", "Used now and then, not every line. Separate with commas.", "phrases", "By my beard!, Light preserve us")
-	Stacked(touches, "Never say", "Words or expressions to keep out.", "avoid", "mon, lass")
+	Stacked(touches, "Favourite expressions", "Used now and then", "phrases", "By my beard!, Light preserve us")
+	Stacked(touches, "Never say", "", "avoid", "mon, lass")
 
 	-- Channels --------------------------------------------------------------
 	local chans = Card(content, "Rewrite in", x2, top - 196, COL, 166)
 	local note = chans:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
 	note:SetPoint("TOPRIGHT", -PAD, -12)
 	note:SetTextColor(DIM[1], DIM[2], DIM[3])
-	note:SetText("Off: the hotkey skips that chat")
+	note:SetText("Off: left as typed")
 	local colW = math.floor((COL - 2 * PAD) / 2)
 	for i, ch in ipairs(RPV.CHANNELS) do
 		local cb = Check(chans, ch.label,
@@ -436,16 +425,15 @@ local function Build()
 	preview:SetPoint("RIGHT", frame, "RIGHT", -230, 0)
 	preview:SetJustifyH("LEFT")
 	preview:SetTextColor(DIM[1], DIM[2], DIM[3])
-	preview:SetText("Settings are saved per character. The helper (RPVoice.ahk) and BridgeControl must be running.")
+	preview:SetText("Per character · Needs the RPVoice helper")
 	preview:SetWordWrap(true)
 
 	local close = Button(frame, CLOSE or "Close", 90, function() frame:Hide() end)
 	close:SetPoint("BOTTOMRIGHT", -30, 20)
 	local tagBtn = Button(frame, "Show tag", 90, function()
-		Core.Print("the helper will see: " .. RPV.BuildTag(Core.SpeakerInfo(nil)))
+		Core.Print("Tag: " .. RPV.BuildTag(Core.SpeakerInfo(nil)))
 	end)
 	tagBtn:SetPoint("RIGHT", close, "LEFT", -8, 0)
-	Tooltip(tagBtn, "Show tag", "Prints, in chat, exactly what the helper sends along with your line.")
 
 	frame:SetScript("OnShow", function()
 		local uiW, uiH = UIParent:GetSize()
@@ -471,13 +459,10 @@ local function RegisterInSettings()
 	local heading = panel:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 	heading:SetPoint("TOPLEFT", 16, -16)
 	heading:SetText("RP Voice")
-	local text = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-	text:SetPoint("TOPLEFT", heading, "BOTTOMLEFT", 0, -8)
-	text:SetText("Your character's roleplay voice for chat. Settings are in their own window (/rpv).")
 	local open = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-	open:SetSize(180, 26)
-	open:SetPoint("TOPLEFT", text, "BOTTOMLEFT", 0, -14)
-	open:SetText("Open RP Voice settings")
+	open:SetSize(140, 26)
+	open:SetPoint("TOPLEFT", heading, "BOTTOMLEFT", 0, -14)
+	open:SetText("Open RP Voice")
 	open:SetScript("OnClick", function()
 		if SettingsPanel and SettingsPanel:IsShown() then HideUIPanel(SettingsPanel) end
 		if not frame then Build() end

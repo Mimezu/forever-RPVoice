@@ -115,7 +115,7 @@ end
 local function Tag(editBox)
 	local db = CharDB()
 	if not db.enabled then
-		Warn("RP Voice is off (/rpv on).")
+		Warn("RP Voice off")
 		return
 	end
 	if editBox.rpvOriginal then
@@ -123,14 +123,14 @@ local function Tag(editBox)
 	end
 	local original = editBox:GetText()
 	if not RPV.CanTag(original) then
-		Warn("RP Voice: type a line first (slash commands are skipped).")
+		Warn("Nothing to rewrite")
 		return
 	end
 
 	local info = SpeakerInfo(editBox)
 	local channel = RPV.ChannelKey(info.chat)
 	if db.channels[channel] == false then
-		Warn("RP Voice is off for this chat (" .. channel:lower() .. "). Change it in /rpv.")
+		Warn("RP Voice off in " .. RPV.ChannelLabel(channel))
 		return
 	end
 	editBox.rpvLimits = LiftLimits(editBox)
@@ -144,7 +144,7 @@ local function Tag(editBox)
 	end
 	if editBox:GetText() ~= tagged then
 		Untag(editBox)
-		Warn("RP Voice: this line is too long to rewrite.")
+		Warn("Line too long")
 		return
 	end
 	editBox:HighlightText()
@@ -189,11 +189,11 @@ end
 local function ShowStatus()
 	local db = CharDB()
 	local info = SpeakerInfo(nil)
-	Print(string.format("%s. Speaking as %s, %s %s of the %s. Style: %s.",
-		db.enabled and "|cff80ff80on|r" or "|cffff8080off|r",
-		info.name, info.sex, info.race, info.faction, db.style))
-	Print("Persona: " .. ((db.persona and db.persona ~= "") and db.persona or "(none)"))
-	Print("/rpv opens the settings window. Also: /rpv on | off | name <name or clear> | persona <text or clear> | style light/medium/strong | test")
+	Print(string.format("%s · %s, %s %s, %s · %s",
+		db.enabled and "|cff80ff80On|r" or "|cffff8080Off|r",
+		info.name, info.sex, info.race, info.faction, (db.style:gsub("^%l", string.upper))))
+	Print((db.persona and db.persona ~= "") and ("Persona: " .. db.persona) or "No persona")
+	Print("/rpv  on | off | name | persona | style | test | help")
 end
 
 SLASH_RPVOICE1 = "/rpv"
@@ -204,23 +204,23 @@ SlashCmdList.RPVOICE = function(msg)
 	cmd = (cmd or ""):lower()
 	if cmd == "on" or cmd == "off" then
 		db.enabled = (cmd == "on")
-		Print(db.enabled and "on." or "off.")
+		Print(db.enabled and "On" or "Off")
 	elseif cmd == "name" then
 		db.name = (rest:lower() ~= "clear") and RPV.Clean(rest, 40) or nil
-		Print("name: " .. (db.name or UnitName("player")))
+		Print("Name: " .. (db.name or UnitName("player")))
 	elseif cmd == "persona" then
 		db.persona = (rest:lower() ~= "clear" and rest ~= "") and RPV.Clean(rest, 200) or nil
-		Print("persona: " .. (db.persona or "(none)"))
+		Print(db.persona and ("Persona: " .. db.persona) or "No persona")
 	elseif cmd == "style" then
 		local style = rest:lower()
 		if RPV.STYLES[style] then
 			db.style = style
-			Print("style: " .. style)
+			Print("Style: " .. style)
 		else
-			Print("style must be light, medium or strong.")
+			Print("Style: light, medium or strong")
 		end
 	elseif cmd == "test" then
-		Print("tag the helper will see: " .. RPV.BuildTag(SpeakerInfo(nil)))
+		Print("Tag: " .. RPV.BuildTag(SpeakerInfo(nil)))
 	elseif cmd == "help" or cmd == "status" then
 		ShowStatus()
 	elseif RPVoiceOptions_Toggle then

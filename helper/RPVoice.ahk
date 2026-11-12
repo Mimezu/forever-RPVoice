@@ -32,11 +32,11 @@ if (A_Args.Length >= 2 && A_Args[1] = "--test") {
     }
 }
 
-A_IconTip := "RP Voice: Ctrl+Shift+R in WoW chat"
+A_IconTip := "RP Voice · Ctrl+Shift+R"
 HotIfWinActive(WOW_WINDOW)
 Hotkey(HOTKEY_KEYS, RewriteChatLine)
 HotIfWinActive()
-TrayTip("Ctrl+Shift+R while typing in WoW chat.", "RP Voice is ready", "Mute")
+TrayTip("Ctrl+Shift+R in chat", "RP Voice ready", "Mute")
 return
 
 ; ---- the hotkey ---------------------------------------------------------------
@@ -61,27 +61,27 @@ RewriteChatLine(*) {
         Send("^+{F11}")
         tagged := got ? A_Clipboard : ""
         if (SubStr(tagged, 1, StrLen(TAG_OPEN)) != TAG_OPEN) {
-            Notify("No RP Voice tag. Is a chat box open with a line typed, and the RPVoice addon on?")
+            Notify("No line to rewrite")
             return
         }
 
-        Notify("RP Voice: rewriting...", 0)
+        Notify("Rewriting…", 0)
         result := RewriteTagged(tagged)
 
         if !WinActive(WOW_WINDOW) {
-            Notify("WoW is no longer the active window, nothing pasted.")
+            Notify("WoW not active, not pasted")
             return
         }
         A_Clipboard := result
         if !ClipWait(1)
-            throw Error("could not use the clipboard")
+            throw Error("Clipboard failed")
         Send("^+{F11}")     ; make sure the whole line is selected again
         Sleep(60)
         Send("^v")
         Sleep(150)
         ToolTip()
     } catch as e {
-        Notify("RP Voice: " e.Message)
+        Notify(e.Message)
     } finally {
         A_Clipboard := saved
         busy := false
@@ -99,7 +99,7 @@ Notify(msg, ms := 4000) {
 ParseTagged(tagged) {
     closeAt := InStr(tagged, TAG_CLOSE)
     if !closeAt
-        throw Error("tag is not closed")
+        throw Error("Bad tag")
     fields := Map()
     fields.CaseSense := false
     header := SubStr(tagged, StrLen(TAG_OPEN) + 1, closeAt - StrLen(TAG_OPEN) - 1)
@@ -244,7 +244,7 @@ Ask(msgs) {
     if !RegExMatch(reply, 's)"content"\s*:\s*"((?:[^"\\]|\\.)*)"', &m) {
         if RegExMatch(reply, 's)"message"\s*:\s*"((?:[^"\\]|\\.)*)"', &err)
             throw Error("BridgeControl: " JsonUnescape(err[1]))
-        throw Error("BridgeControl gave no answer")
+        throw Error("No answer")
     }
     return CleanForWow(JsonUnescape(m[1]))
 }
@@ -252,7 +252,7 @@ Ask(msgs) {
 RewriteTagged(tagged) {
     parsed := ParseTagged(tagged)
     if (parsed.line = "")
-        throw Error("the line is empty")
+        throw Error("Empty line")
     budget := WordBudget(parsed.fields, parsed.line)
     msgs := BuildMessages(parsed, budget)
     result := Ask(msgs)
@@ -281,12 +281,12 @@ PostJson(url, body) {
     try
         req.Send(Utf8Bytes(body))
     catch
-        throw Error("BridgeControl is not answering on " url)
+        throw Error("BridgeControl not running")
     text := BytesToUtf8(req.ResponseBody)
     if (req.Status != 200) {
         if RegExMatch(text, 's)"message"\s*:\s*"((?:[^"\\]|\\.)*)"', &err)
             throw Error("BridgeControl " req.Status ": " JsonUnescape(err[1]))
-        throw Error("BridgeControl answered " req.Status)
+        throw Error("BridgeControl error " req.Status)
     }
     return text
 }
@@ -371,6 +371,6 @@ CleanForWow(s) {
         s := cut > 1 ? RTrim(SubStr(s, 1, cut - 1), " ,;:-") : SubStr(s, 1, StrLen(s) - 1)
     }
     if (s = "")
-        throw Error("BridgeControl gave an empty answer")
+        throw Error("Empty answer")
     return s
 }

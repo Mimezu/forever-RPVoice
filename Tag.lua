@@ -51,6 +51,13 @@ RPV.CHANNELS = {
 	{ key = "CHANNEL", label = "Channels" },
 }
 
+function RPV.ChannelLabel(key)
+	for _, ch in ipairs(RPV.CHANNELS) do
+		if ch.key == key then return ch.label end
+	end
+	return key
+end
+
 -- Which channel switch a chat type falls under.
 function RPV.ChannelKey(chatType)
 	chatType = chatType or "SAY"
