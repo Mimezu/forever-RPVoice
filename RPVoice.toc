@@ -2,12 +2,15 @@
 ## Title: RP Voice
 ## Notes: Rewrites your chat line in your character's roleplay voice (with the RPVoice helper and BridgeControl). /rpv
 ## Author: Mimezu
-## Version: 0.3.0
+## Version: 0.4.0
+## SavedVariables: RPVoiceDB
 ## SavedVariablesPerCharacter: RPVoiceCharDB
 ## IconTexture: Interface\Icons\INV_Misc_Note_02
 ## Category: Mimezu's Suite
 
 Tag.lua
+Keys.lua
 RPVoice.lua
 Skin.lua
+Minimap.lua
 Options.lua

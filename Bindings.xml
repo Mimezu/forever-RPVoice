@@ -1,0 +1,5 @@
+<Bindings>
+	<Binding name="RPVOICE_TOGGLE" header="RPVOICE" category="BINDING_CATEGORY_RPVOICE">
+		RPVoiceOptions_Toggle()
+	</Binding>
+</Bindings>

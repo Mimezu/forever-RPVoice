@@ -6,7 +6,7 @@ local RPV = RPVoiceTag
 local S = RPVoiceSkin
 local Core = RPVoiceCore
 
-local W, H = 660, 568
+local W, H = 660, 640
 local GOLD = { 1, 0.82, 0 }
 local NOTE = { 0.80, 0.77, 0.70 }
 local DIM = { 0.62, 0.60, 0.55 }
@@ -283,6 +283,134 @@ local function Button(parent, label, w, onClick)
 	return b
 end
 
+-- Key setter: the bound key as a keycap, click to listen for the next key.
+-- Esc or a plain left/right click cancels; modifiers combine; never in combat.
+local Keys = RPVoiceKeys
+local listening
+
+local function Keycap(parent)
+	local cap = CreateFrame("Button", nil, parent, "BackdropTemplate")
+	cap:SetHeight(24)
+	cap:SetBackdrop({ bgFile = "Interface\\Buttons\\WHITE8X8", edgeFile = "Interface\\Buttons\\WHITE8X8", edgeSize = 1 })
+	cap:SetBackdropColor(0, 0, 0, 0.38)
+	cap:SetBackdropBorderColor(BRONZE[1], BRONZE[2], BRONZE[3], 0.7)
+	local front = cap:CreateTexture(nil, "BORDER", nil, 1)
+	front:SetPoint("BOTTOMLEFT"); front:SetPoint("BOTTOMRIGHT"); front:SetHeight(2)
+	front:SetColorTexture(BRONZE[1], BRONZE[2], BRONZE[3], 0.8)
+	local hover = cap:CreateTexture(nil, "HIGHLIGHT")
+	hover:SetPoint("TOPLEFT", 1, -1); hover:SetPoint("BOTTOMRIGHT", -1, 1)
+	hover:SetColorTexture(1, 0.72, 0.2, 0.12)
+	cap.text = cap:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+	cap.text:SetPoint("CENTER", 0, 1)
+	function cap:SetKey(text, color)
+		self.text:SetText(text)
+		color = color or GOLD
+		self.text:SetTextColor(color[1], color[2], color[3])
+		self:SetWidth(math.max(64, self.text:GetStringWidth() + 20))
+	end
+	return cap
+end
+
+local function KeySetter(parent, action)
+	local s = CreateFrame("Frame", nil, parent)
+	s:SetSize(260, 24)
+	s.cap = Keycap(s)
+	s.cap:SetPoint("LEFT")
+	s.status = s:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
+	s.status:SetPoint("LEFT", s.cap, "RIGHT", 8, 0)
+	s.status:SetTextColor(DIM[1], DIM[2], DIM[3])
+	s.cap:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+	Tooltip(s.cap, "Set key", "Right-click clears")
+
+	local catcher = CreateFrame("Frame", nil, s)
+	catcher:SetAllPoints(UIParent)
+	catcher:SetFrameStrata("FULLSCREEN_DIALOG")
+	catcher:Hide()
+
+	function s:Refresh()
+		if self.listening then
+			self.cap:SetKey("Press a key", NOTE)
+			self.status:SetText("Esc cancels")
+		else
+			local key = Keys.Bound(action)
+			if key then self.cap:SetKey(key) else self.cap:SetKey("Not set", DIM) end
+		end
+	end
+
+	function s:Stop()
+		if not self.listening then return end
+		self.listening = false
+		if listening == self then listening = nil end
+		catcher:EnableKeyboard(false)
+		catcher:EnableMouse(false)
+		catcher:EnableMouseWheel(false)
+		catcher:Hide()
+		self.status:SetText("")
+		self:Refresh()
+	end
+
+	local function Take(key)
+		local combo = Keys.Combo(key)
+		if Keys.Refused(combo) then
+			s.status:SetText("Kept for chat")
+			return
+		end
+		s:Stop()
+		local _, said = Keys.Bind(action, combo)
+		s.status:SetText(said or "")
+		s:Refresh()
+	end
+
+	function s:Listen()
+		if InCombatLockdown() then
+			self.status:SetText("Not in combat")
+			return
+		end
+		if listening and listening ~= self then listening:Stop() end
+		listening = self
+		self.listening = true
+		catcher:Show()
+		catcher:EnableKeyboard(true)
+		if catcher.SetPropagateKeyboardInput then catcher:SetPropagateKeyboardInput(false) end
+		catcher:EnableMouse(true)
+		catcher:EnableMouseWheel(true)
+		self:Refresh()
+	end
+
+	catcher:SetScript("OnKeyDown", function(_, key)
+		if Keys.MODIFIERS[key] then return end
+		if key == "ESCAPE" then s:Stop() return end
+		Take(key)
+	end)
+	catcher:SetScript("OnMouseDown", function(_, button)
+		local key = Keys.Button(button)
+		if key == "BUTTON1" or key == "BUTTON2" then s:Stop() return end
+		Take(key)
+	end)
+	catcher:SetScript("OnMouseWheel", function(_, delta)
+		Take(delta > 0 and "MOUSEWHEELUP" or "MOUSEWHEELDOWN")
+	end)
+
+	s.cap:SetScript("OnClick", function(_, button)
+		if button == "RightButton" then
+			s:Stop()
+			local _, said = Keys.Clear(action)
+			s.status:SetText(said or "")
+			s:Refresh()
+		else
+			s:Listen()
+		end
+	end)
+	s:SetScript("OnHide", function(self) self:Stop() end)
+	s:RegisterEvent("UPDATE_BINDINGS")
+	s:RegisterEvent("PLAYER_REGEN_DISABLED")
+	s:SetScript("OnEvent", function(self, event)
+		if event == "PLAYER_REGEN_DISABLED" then self:Stop() else self:Refresh() end
+	end)
+	s:Refresh()
+	return s
+end
+
 ---------------------------------------------------------------------------
 -- The window
 ---------------------------------------------------------------------------
@@ -421,6 +549,24 @@ local function Build()
 		cb:SetPoint("TOPLEFT", PAD - 4 + col * colW, -32 - line * 28)
 	end
 
+	-- Keys ------------------------------------------------------------------
+	local keys = Card(content, "Keys", 0, top - 404, CW, 64)
+	local keyRow = Row(keys, nil)
+	local x = 0
+	for _, entry in ipairs(Keys.ACTIONS) do
+		local label = keyRow:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+		label:SetPoint("LEFT", x, 0)
+		label:SetText(entry.label)
+		local setter = KeySetter(keyRow, entry.action)
+		setter:SetPoint("LEFT", label, "RIGHT", 10, 0)
+		OnRefresh(function() setter:Refresh() end)
+		x = x + COL + 10
+	end
+	local minimap = Check(keyRow, "Minimap icon",
+		function() return RPVoiceMinimap.IsShown() end,
+		function(v) RPVoiceMinimap.SetShown(v) end)
+	minimap:SetPoint("LEFT", COL + 6, 0)
+
 	-- Footer ----------------------------------------------------------------
 	local preview = frame:CreateFontString(nil, "ARTWORK", "GameFontHighlightSmall")
 	preview:SetPoint("BOTTOMLEFT", 30, 24)
@@ -464,11 +610,41 @@ local function RegisterInSettings()
 	local open = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
 	open:SetSize(140, 26)
 	open:SetPoint("TOPLEFT", heading, "BOTTOMLEFT", 0, -14)
-	open:SetText("Open RP Voice")
+	open:SetText("Open")
 	open:SetScript("OnClick", function()
 		if SettingsPanel and SettingsPanel:IsShown() then HideUIPanel(SettingsPanel) end
 		if not frame then Build() end
 		frame:Show()
+	end)
+	local slash = panel:CreateFontString(nil, "ARTWORK", "GameFontDisable")
+	slash:SetPoint("LEFT", open, "RIGHT", 12, 0)
+	slash:SetText("/rpv")
+
+	local mm = CreateFrame("CheckButton", nil, panel, "UICheckButtonTemplate")
+	mm:SetSize(26, 26)
+	mm:SetPoint("TOPLEFT", open, "BOTTOMLEFT", -2, -16)
+	local mmText = mm:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+	mmText:SetPoint("LEFT", mm, "RIGHT", 2, 1)
+	mmText:SetText("Minimap icon")
+	if mm.Text then mm.Text:SetText("") end
+	mm:SetScript("OnClick", function(self)
+		RPVoiceMinimap.SetShown(self:GetChecked() and true or false)
+	end)
+
+	local y = -16
+	local setters = {}
+	for _, entry in ipairs(Keys.ACTIONS) do
+		local label = panel:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+		label:SetPoint("TOPLEFT", mm, "BOTTOMLEFT", 2, y - 4)
+		label:SetText(entry.label)
+		local setter = KeySetter(panel, entry.action)
+		setter:SetPoint("LEFT", label, "LEFT", 110, 0)
+		setters[#setters + 1] = setter
+		y = y - 30
+	end
+	panel:SetScript("OnShow", function()
+		mm:SetChecked(RPVoiceMinimap.IsShown())
+		for _, s in ipairs(setters) do s:Refresh() end
 	end)
 	local category = Settings.RegisterCanvasLayoutCategory(panel, "RP Voice")
 	Settings.RegisterAddOnCategory(category)

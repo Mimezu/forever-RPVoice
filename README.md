@@ -19,6 +19,7 @@ Rewrites your chat line, typed or spoken, in your character's roleplay voice, us
 - `{a joke about gnomes}` or `insert joke here` lets the character write that part.
 - Language: English translates any line first (/rpv, Voice).
 - Leave Ctrl+Shift+F10, F11 and F12 unbound in WoW.
+- Window key and minimap icon: /rpv, Keys.
 
 | Command | |
 |---|---|
@@ -29,7 +30,7 @@ Rewrites your chat line, typed or spoken, in your character's roleplay voice, us
 
 ## Data
 
-Settings are saved per character, in `WTF\Account\<account>\<realm>\<character>\SavedVariables\RPVoice.lua`.
+Settings are saved per character, in `WTF\Account\<account>\<realm>\<character>\SavedVariables\RPVoice.lua`; the minimap icon account-wide.
 
 ## Test
 
