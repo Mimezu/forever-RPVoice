@@ -154,8 +154,11 @@ local function Tag(editBox)
 	end
 	editBox:HighlightText()
 
+	-- Only this tag's timer may untag: a later tag gets a new token.
+	local token = (editBox.rpvTagToken or 0) + 1
+	editBox.rpvTagToken = token
 	C_Timer.After(TAG_TIMEOUT, function()
-		if editBox.rpvOriginal and RPV.HasTag(editBox:GetText()) then
+		if editBox.rpvTagToken == token and editBox.rpvOriginal and RPV.HasTag(editBox:GetText()) then
 			Untag(editBox)
 		end
 	end)
